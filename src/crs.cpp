@@ -65,13 +65,17 @@ void diagonalMatrix(const auto rows, const auto cols, auto &mat_A){
 void csr(const auto rows, const auto cols, auto sparse_matrix) {						//pass in vector
 	std::vector <double> val;
 	std::vector <int> col_ind, row_ptr;
-
+	int cnt = -1;
 	for(int i = 0; i < rows; i++){
 		for(int j = 0; j < cols; j++){
 			if(sparse_matrix[i*cols + j]!=0){
 				val.push_back(sparse_matrix[i*cols + j]);
 				col_ind.push_back(j);
-				row_ptr.push_back(i);
+				if (i == cnt+1) {
+					int row_elem = val.size();							//location in val vector where new row starts
+					row_ptr.push_back(row_elem-1);
+					++cnt;
+				}
 			}
 		}
 	}
@@ -101,14 +105,20 @@ int main (int argc, char *argv[]) {
 	int length = m*n;
 	std::vector<double> sp(length);
 	double array [length];
+	/*
+	Generate random sparse matrix
+	*/
 	int t = 6;											//target nnz elements
 	for (int i = 0; i < t; ++i) {
 		int index = (int) (length * (int) randNum());
 		array[index] = i % 2 ? -1 : 1;
 	}
-	print_ip_mat (m, n, "sparse_matrix", array);
+	//print_ip_mat (m, n, "sparse_matrix", array);
+	//end sparse
 
-	csr(m, n, diagA);											//matrix stored in row major
+	double sparse [16] = {1, 2, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 3, 0, 5, 16};
+	print_ip_mat(m, n, "sparse matrix manual", sparse);
+	csr(m, n, sparse);											//matrix stored in row major
 
 
 	delete [] denseA;
