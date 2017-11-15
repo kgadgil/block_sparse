@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 3.6) 
-project (compressed_row_storage) 
+#project (compressed_row_storage) 
+project (doubly_compressed_sparse_rows)
 
 set(CMAKE_CXX_STANDARD 14)
-add_executable(crs crs.cpp)
-MESSAGE( STATUS "CMAKE_CXX_COMPILER: " ${CMAKE_CXX_COMPILER})
+find_package(BLAS)
+
+#add_executable(crs crs.cpp)
+add_executable(dcsr dcsr.cpp)

@@ -1,5 +1,5 @@
 /*
-COMPRESSED ROW STORAGE
+COMPRESSED STORAGE
 */
 
 #include <iostream>
@@ -25,7 +25,7 @@ void print_ip_mat (auto rows, auto cols, auto msg, const auto mat){
 	for (int i = 0; i != rows*cols; ++i){
 		std::cout << mat[i] << "\t";
 		cnt++;
-		if(cnt == rows){		//row major: change to cols if col-major
+		if(cnt == rows){					//row major: change to cols if col-major
 			std::cout << std::endl;
 			cnt = 0;
 		}

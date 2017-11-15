@@ -1,0 +1,18 @@
+Write a class that spits out random matrix
+
+mat A = new matrix(m,n)			//gives random matrix
+
+Write functionality in class matrix which accepts user-defined matrix
+What form is the matrix stored in? How would PSI4 or TiledArray give you the matrix?
+Constructor overloading.
+
+Print funtionality in class matrix
+
+Transpose matrix in class matrix
+
+Matrix Computations will be another class
+Has funtionality for dense matrix multiplication
+sparse mm
+error : matrix dim dont match
+
+This class should take inputs matrix object_A and matrix object_B
