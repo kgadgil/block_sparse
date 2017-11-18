@@ -78,7 +78,7 @@ void get_sorted_indices(const auto rows, const auto cols, const std::vector <aut
 	for(int i = 0; i < rows; i++){
 		for(int j = 0; j < cols; j++){
 			if(matrix[i*cols + j]!=0){
-				val.push_back(matrix[i*cols + j]);
+				val.push_back(matrix[i*cols + j]);										//collect non-zero (nnz) values
 				if(std::find(col_idx.begin(), col_idx.end(), j) == col_idx.end()) {		//Return value of std::find Iterator to the first element satisfying the condition or last if no such element is found.
     			/* vector col_ind doesnt contain item j */
 					col_idx.push_back(j);
@@ -103,9 +103,8 @@ void get_sorted_indices(const auto rows, const auto cols, const std::vector <aut
 	printVec(col_ind);
 	std::cout << "row index" << std::endl;
 	printVec(row_ind);
-	std::cout << "row ptr in csr storage" << std::endl;
+*/	std::cout << "row ptr in csr storage" << std::endl;
 	printVec(row_ptr);
-*/
 }
 
 void transpose(const int rows, const int cols, const std::vector<auto> matrix, std::vector<auto> &transpose_matrix) {
@@ -154,12 +153,14 @@ int main (int argc, char *argv[]) {
 	std::vector <double> val_A;
 	std::vector <int> col_idx_A, row_idx_A;
 	get_sorted_indices(m, n, A, val_A, col_idx_A, row_idx_A);				//get col indices of A									//matrix stored in row major
+	std::cout << "A matrix" << std::endl;
+	printMatrix(m, n, A);
 	std::cout << "A.JC" << std::endl;
 	printVec(col_idx_A);
+	std::cout << "A.IR" << std::endl;
+	printVec(row_idx_A);
 
 	std::vector<double> B = sparse;
-	std::cout << "B matrix" << std::endl;
-	printMatrix(m, n, B);
 
 	std::vector<double> Btrans (B.size());
 	transpose(m, n, B, Btrans);
@@ -172,9 +173,12 @@ int main (int argc, char *argv[]) {
 	get_sorted_indices(m, n, Btrans, val_B, col_idx_B, row_idx_B);			//get row indices of B by transposing and getting col
 	std::cout << "BT.JC" << std::endl;
 	printVec(col_idx_B);
+	std::cout << "BT.IR" << std::endl;
+	printVec(row_idx_B);
+
 	std::vector<double> isect_elems;
 	isect(col_idx_A, col_idx_B, isect_elems);
-	std::cout << "set of indices common to A.JC and BT.JC" << std::endl;
+	std::cout << "set of col indices common to A.JC and BT.JC" << std::endl;
 	printVec(isect_elems);
 
 	return 0;
