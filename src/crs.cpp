@@ -64,27 +64,57 @@ void diagonalMatrix(const auto rows, const auto cols, auto &mat_A){
 
 void csr(const auto rows, const auto cols, auto sparse_matrix) {						//pass in vector
 	std::vector <double> val;
-	std::vector <int> col_ind, row_ptr;
-	int cnt = -1;
-	for(int i = 0; i < rows; i++){
-		for(int j = 0; j < cols; j++){
-			if(sparse_matrix[i*cols + j]!=0){
-				val.push_back(sparse_matrix[i*cols + j]);
+	std::vector <int> col_ind, row_ptr, row_ind;
+	//std::vector <std::vector<double>> key_val_pair;
+	int cnt = 0;
+	bool new_row = false;
+	for(int i = 0, ii=0; i != rows; ++i){
+		for(int j = 0; j != cols; ++j, ++ii){
+			if (j==0) 
+				new_row = true;
+			if(sparse_matrix[ii] != 0){
+				val.push_back(sparse_matrix[ii]);
+				row_ind.push_back(i);
 				col_ind.push_back(j);
-				if (i == cnt+1) {
-					int row_elem = val.size();							//location in val vector where new row starts
-					row_ptr.push_back(row_elem-1);
-					++cnt;
+			
+				if (new_row == true) {
+					row_ptr.push_back(cnt);
+					new_row = false;
 				}
+				cnt++;
 			}
 		}
 	}
-	std::cout << "val" << std::endl;
+	/*
+	key_val_pair.push_back(val);
+	key_val_pair.push_back(row_ind);
+	key_val_pair.push_back(col_ind);
+	for (int i = 0; i < key_val_pair.size(); i++) {
+		for (int j = 0; j < key_val_pair[1].size(); j++) {
+			std::cout << key_val_pair[i][j] << std::endl;
+		}
+	}
+	*/
+
+	//location in val vector where new row starts
+	/*int row_elem = val.size();
+	for(int i = 0; i < row_ind.size(); i++){
+		for(int j = 0; j < col_ind.size(); j++){
+			row_ptr.push_back(val[i*row_elem + j]);			//FIX : logic for row_ptr
+		}
+	}
+	*/
+	
+
+	/*std::cout << "val" << std::endl;
 	printVec(val);
 	std::cout << "column index" << std::endl;
 	printVec(col_ind);
-	std::cout << "row ptr" << std::endl;
+	std::cout << "row index" << std::endl;
+	printVec(row_ind);
+	*/std::cout << "row ptr" << std::endl;
 	printVec(row_ptr);
+	
 }
 
 int main (int argc, char *argv[]) {
@@ -116,7 +146,7 @@ int main (int argc, char *argv[]) {
 	//print_ip_mat (m, n, "sparse_matrix", array);
 	//end sparse
 
-	double sparse [16] = {1, 2, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0, 3, 0, 5, 16};
+	double sparse [16] = {1, 2, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0, 3, 0, 5, 16};
 	print_ip_mat(m, n, "sparse matrix manual", sparse);
 	csr(m, n, sparse);											//matrix stored in row major
 

@@ -72,26 +72,29 @@ void diagonalMatrix(const auto rows, const auto cols, auto &mat_A){
 
 }
 
-void get_sorted_indices(const auto rows, const auto cols, const std::vector <auto> matrix, std::vector <auto> &val, std::vector <auto> &col_idx, std::vector <auto> &row_idx) {						//pass in vector
+void get_sorted_indices(const auto rows, const auto cols, const std::vector <auto> sparse_matrix, std::vector <auto> &val, std::vector <auto> &col_idx, std::vector <auto> &row_idx) {						//pass in vector
 	std::vector <int> row_ptr;
-	int cnt = -1;
-	for(int i = 0; i < rows; i++){
-		for(int j = 0; j < cols; j++){
-			if(matrix[i*cols + j]!=0){
-				val.push_back(matrix[i*cols + j]);										//collect non-zero (nnz) values
-				if(std::find(col_idx.begin(), col_idx.end(), j) == col_idx.end()) {		//Return value of std::find Iterator to the first element satisfying the condition or last if no such element is found.
-    			/* vector col_ind doesnt contain item j */
-					col_idx.push_back(j);
-				}
+	int cnt = 0;
+	bool new_row = false;
+	for(int i = 0, ii=0; i != rows; ++i){
+		for(int j = 0; j != cols; ++j, ++ii){
+			if (j==0) 
+				new_row = true;
+			if(sparse_matrix[ii] != 0){
+				val.push_back(sparse_matrix[ii]);
 				if(std::find(row_idx.begin(), row_idx.end(), i) == row_idx.end()) {		//Return value of std::find Iterator to the first element satisfying the condition or last if no such element is found.
     			/* vector row_ind doesnt contain index i */
 					row_idx.push_back(i);
 				} 
-				if (i == cnt+1) {
-					int row_elem = val.size();							//location in val vector where new row starts
-					row_ptr.push_back(row_elem-1);
-					++cnt;
+				if(std::find(col_idx.begin(), col_idx.end(), j) == col_idx.end()) {		//Return value of std::find Iterator to the first element satisfying the condition or last if no such element is found.
+    			/* vector col_ind doesnt contain item j */
+					col_idx.push_back(j);
 				}
+				if (new_row == true) {
+					row_ptr.push_back(cnt);
+					new_row = false;
+				}
+				cnt++;
 			}
 		}
 	}
