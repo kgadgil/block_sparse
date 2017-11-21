@@ -113,16 +113,6 @@ void get_sorted_indices(const auto lead_dim, const auto lag_dim, const std::vect
 	printVec(row_ptr);
 */
 }
-
-void transpose(const auto lead_dim, const auto lag_dim, const std::vector<auto> matrix, std::vector<auto> &transpose_matrix) {
-	//this simply changes data layout	
-	for (int i = 0, ii = 0; i != lag_dim; ++i) {
-		for (int j = 0;  j != lead_dim; ++j, ++ii) {
-			transpose_matrix[j*lead_dim + i] = matrix[ii];
-		}
-	}
-}
-
 void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::vector<auto> &isect_vec) {			//intersection of A.JC and BT.JC; set of indices that contribute non-trivially to outer product
 	for (int i = 0; i!= idx_A.size(); ++i){
 		for (int j = 0; j!= idx_B.size(); ++j){
@@ -183,10 +173,6 @@ int main (int argc, char *argv[]) {
 	printVec(row_idx_A);
 
 	std::vector<double> B = sparse;
-
-	/*std::vector<double> Btrans (B.size());
-	transpose(lead_dim, lag_dim, B, Btrans);		//don't need a transpose function, switch lead and lag in print function
-	*/
 	std::cout << "B transpose matrix" << std::endl;
 	printMatrix(lag_dim, lead_dim, Btrans);			//print transposed matrix
 
