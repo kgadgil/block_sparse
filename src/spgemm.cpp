@@ -144,8 +144,6 @@ int main (int argc, char *argv[]) {
 		lag_dim = m;
 	}
 	else if (leading == "col-major"|| leading == "colmajor") {
-		std::cout << "m " << m << std::endl;
-		std::cout << "n " << n << std::endl;
 		lead_dim = m;						//col-major => leading_dim = #rows
 		lag_dim = n;	
 	}

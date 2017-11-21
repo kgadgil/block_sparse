@@ -182,10 +182,14 @@ int main (int argc, char *argv[]) {
 	std::cout << "A row idx" << std::endl;
 	printVec(row_idx_A);
 
-	std::vector<double> B ,Btrans
-	B = sparse;
+	std::vector<double> B = sparse;
+	std::cout << "B matrix" << std::endl;
+	printMatrix(lead_dim, lag_dim, B);
+	
+	std::vector<double> Btrans (B.size());
+	transpose(lead_dim, lag_dim, B, Btrans);
 	std::cout << "B transpose matrix" << std::endl;
-	printMatrix(lead_dim, lag_dim, Btrans);			//print transposed matrix
+	printMatrix(lead_dim, lag_dim, Btrans);
 
 	std::vector <double> val_B;
 	std::vector <int> col_idx_B, row_idx_B;
