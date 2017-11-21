@@ -1,10 +1,9 @@
 /*
-DOUBLY COMPRESSED SPARSE ROWS
+SPARSE GEMM USING DOUBLY COMPRESSED SPARSE COLS
 */
 
 #include <iostream>
 #include <vector>
-#include <string>
 #include <random>
 #include <new>
 #include <cblas.h>
@@ -84,11 +83,11 @@ void get_sorted_indices(const auto lead_dim, const auto lag_dim, const std::vect
 			if(sparse_matrix[ii] != 0){
 				val.push_back(sparse_matrix[ii]);
 				if(std::find(row_idx.begin(), row_idx.end(), i) == row_idx.end()) {		//Return value of std::find Iterator to the first element satisfying the condition or last if no such element is found.
-	    			//vector row_ind doesnt contain index i
+    			/* vector row_ind doesnt contain index i */
 					row_idx.push_back(i);
 				} 
 				if(std::find(col_idx.begin(), col_idx.end(), j) == col_idx.end()) {		//Return value of std::find Iterator to the first element satisfying the condition or last if no such element is found.
-    				//vector col_ind doesnt contain item j
+    			/* vector col_ind doesnt contain item j */
 					col_idx.push_back(j);
 				}
 				if (new_row == true) {
@@ -97,14 +96,12 @@ void get_sorted_indices(const auto lead_dim, const auto lag_dim, const std::vect
 				}
 				cnt++;
 			}
-		} 
+		}
 	}
-
 //	std::cout << "val" << std::endl;
 //	printVec(val);
 	std::sort(col_idx.begin(), col_idx.end());						//get sorted vector of indices in order to get sorted lists after intersection
 	std::sort(row_idx.begin(), row_idx.end());
-
 /*	std::cout << "column index" << std::endl;
 	printVec(col_ind);
 	std::cout << "row index" << std::endl;
@@ -137,38 +134,36 @@ int main (int argc, char *argv[]) {
 	//int n = atoi(argv[1]);
 	int m, n;
 	m = n = 4;
-	
+
 	int lead_dim, lag_dim;					//SET LEADING DIMENSION
-	std::string leading = argv[1];
-	std::cout << leading << std::endl;
-	if (leading == "row-major" || leading == "rowmajor"){
+	auto leaddim = argv[1];
+	if (leaddim == "row-major"){
 		lead_dim = n;						//row-major => leading_dim = #cols
 		lag_dim = m;
 	}
-	else if (leading == "col-major"|| leading == "colmajor") {
-		std::cout << "m " << m << std::endl;
-		std::cout << "n " << n << std::endl;
+	else if (leaddim == "col-major") {
 		lead_dim = m;						//col-major => leading_dim = #rows
 		lag_dim = n;	
 	}
+	
 	/*
 	Generate random sparse matrix
-	
+	*/
 	int length = m*n;
 	std::vector<double> sp(length);
 	double array [length];
+
 	
 	int t = 6;											//target nnz elements
 	for (int i = 0; i < t; ++i) {
 		int index = (int) (length * (int) randNum());
 		array[index] = i % 2 ? -1 : 1;
 	}
-	//print_ip_mat (m, n, "sparse_matrix", array);
+	//print_ip_mat (lead_dim, lag_dim, "sparse_matrix", array);
 	//end sparse
-	*/
 
 	std::vector<double> sparse = {1, 2, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0, 3, 0, 5, 16};
-	//print_ip_mat(m, n, "sparse matrix manual", sparse);
+	//print_ip_mat(lead_dim, lag_dim, "sparse matrix manual", sparse);
 	
 	std::vector<double> A = sparse;
 
@@ -176,7 +171,7 @@ int main (int argc, char *argv[]) {
 	std::vector <int> col_idx_A, row_idx_A;
 	get_sorted_indices(lead_dim, lag_dim, A, val_A, col_idx_A, row_idx_A);				//get col indices of A									//matrix stored in row major
 	std::cout << "A matrix" << std::endl;
-	printMatrix(lead_dim, lag_dim, A);
+	printMatrix(m, n, A);
 	std::cout << "A col idx" << std::endl;
 	printVec(col_idx_A);
 	std::cout << "A row idx" << std::endl;
@@ -184,15 +179,15 @@ int main (int argc, char *argv[]) {
 
 	std::vector<double> B = sparse;
 
-	/*std::vector<double> Btrans (B.size());
-	transpose(lead_dim, lag_dim, B, Btrans);		//don't need a transpose function, switch lead and lag in print function
-	*/
+	std::vector<double> Btrans (B.size());
+	transpose(m, n, B, Btrans);
+	
 	std::cout << "B transpose matrix" << std::endl;
-	printMatrix(lag_dim, lead_dim, Btrans);			//print transposed matrix
+	printMatrix(m, n, Btrans);
 
 	std::vector <double> val_B;
 	std::vector <int> col_idx_B, row_idx_B;
-	get_sorted_indices(lag_dim, lead_dim, B, val_B, col_idx_B, row_idx_B);			//swap lead and lag_dim of B to input transpose of B
+	get_sorted_indices(lead_dim, lag_dim, Btrans, val_B, col_idx_B, row_idx_B);			//get row indices of B by transposing and getting col
 	std::cout << "BT col idx" << std::endl;
 	printVec(col_idx_B);
 	std::cout << "BT row idx" << std::endl;

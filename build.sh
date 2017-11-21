@@ -7,5 +7,7 @@ rm -rf CMakeFiles/ CMakeCache.txt
 cmake ../src/
 #make crs VERBOSE=1
 make dcsr VERBOSE=1
+#make spgemm VERBOSE=1
 #./crs 4
-./dcsr
+./dcsr col-major
+#./spgemm col-major
