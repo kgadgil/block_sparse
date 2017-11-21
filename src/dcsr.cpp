@@ -73,6 +73,15 @@ void diagonalMatrix(const auto lead_dim, const auto lag_dim, auto &mat_A){
 
 }
 
+void transpose(const auto lead_dim, const auto lag_dim, const std::vector<auto> matrix, std::vector<auto> &transpose_matrix) {
+	//this simply changes data layout	
+	for (int i = 0, ii = 0; i != lag_dim; ++i) {
+		for (int j = 0;  j != lead_dim; ++j, ++ii) {
+			transpose_matrix[j*lead_dim + i] = matrix[ii];
+		}
+	}
+}
+
 void get_sorted_indices(const auto lead_dim, const auto lag_dim, const std::vector <auto> sparse_matrix, std::vector <auto> &val, std::vector <auto> &col_idx, std::vector <auto> &row_idx) {						//pass in vector
 	std::vector <int> row_ptr;
 	int cnt = 0;
@@ -113,6 +122,7 @@ void get_sorted_indices(const auto lead_dim, const auto lag_dim, const std::vect
 	printVec(row_ptr);
 */
 }
+
 void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::vector<auto> &isect_vec) {			//intersection of A.JC and BT.JC; set of indices that contribute non-trivially to outer product
 	for (int i = 0; i!= idx_A.size(); ++i){
 		for (int j = 0; j!= idx_B.size(); ++j){
@@ -172,13 +182,14 @@ int main (int argc, char *argv[]) {
 	std::cout << "A row idx" << std::endl;
 	printVec(row_idx_A);
 
-	std::vector<double> B = sparse;
+	std::vector<double> B ,Btrans
+	B = sparse;
 	std::cout << "B transpose matrix" << std::endl;
-	printMatrix(lag_dim, lead_dim, Btrans);			//print transposed matrix
+	printMatrix(lead_dim, lag_dim, Btrans);			//print transposed matrix
 
 	std::vector <double> val_B;
 	std::vector <int> col_idx_B, row_idx_B;
-	get_sorted_indices(lag_dim, lead_dim, B, val_B, col_idx_B, row_idx_B);			//swap lead and lag_dim of B to input transpose of B
+	get_sorted_indices(lead_dim, lag_dim, Btrans, val_B, col_idx_B, row_idx_B);			//swap lead and lag_dim of B to input transpose of B
 	std::cout << "BT col idx" << std::endl;
 	printVec(col_idx_B);
 	std::cout << "BT row idx" << std::endl;
