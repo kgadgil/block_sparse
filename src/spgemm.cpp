@@ -1,5 +1,6 @@
 /*
-DOUBLY COMPRESSED SPARSE ROWS
+SpGemm
+Buluc, A., & Gilbert, J. (2011). Parallel Sparse Matrix-Matrix Multiplication and Indexing: Implementation and Experiments, 94720. https://doi.org/10.1137/110848244
 */
 
 #include <iostream>
@@ -21,19 +22,6 @@ double randNum() {/* initialize random seed: */
 	return randx;
 }
 
-void print_ip_mat (auto lead_dim, auto lag_dim, auto msg, const auto mat){
-	std::cout << msg << std::endl;
-	int cnt = 0;
-	for (int i = 0; i != lag_dim*lead_dim; ++i){
-		std::cout << mat[i] << "\t";
-		cnt++;
-		if(cnt == lead_dim){					//row major: change to cols if col-major
-			std::cout << std::endl;
-			cnt = 0;
-		}
-	}
-}
-
 void printVec (const std::vector<auto> vec) {
 	for (int i = 0; i < vec.size(); i++){
 		std::cout << vec[i] << "\t";
@@ -41,10 +29,11 @@ void printVec (const std::vector<auto> vec) {
 	std::cout << std::endl;
 }
 
-void printMatrix (const int lead_dim, const int lag_dim, const std::vector<auto> vec) {
+void printMatrix (const int lead_dim, const int lag_dim, auto msg, const auto mat) {
+	std::cout << msg << std::endl;
 	for (int i = 0, ii=0; i != lag_dim; ++i) {
 		for (int j = 0; j != lead_dim; ++j, ++ii) {
-			std::cout << vec[ii] << "\t";
+			std::cout << mat[ii] << "\t";
 		} std::cout << std::endl;
 	}
 }
@@ -130,11 +119,15 @@ void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::v
 	}	
 }
 
+void serial_colwise_mm (const auto lead_dim, const auto lag_dim, const std::vector <auto> matrixA, const std::vector <auto> matrixB) {
+
+}
 int main (int argc, char *argv[]) {
 	//int m = atoi(argv[1]);
 	//int n = atoi(argv[1]);
 	int m, n;
-	m = n = 4;
+	m = 3;
+	n = 4;
 	
 	int lead_dim, lag_dim;					//SET LEADING DIMENSION
 	std::string leading = argv[1];
@@ -147,60 +140,14 @@ int main (int argc, char *argv[]) {
 		lead_dim = m;						//col-major => leading_dim = #rows
 		lag_dim = n;	
 	}
-	/*
-	Generate random sparse matrix
 	
-	int length = m*n;
-	std::vector<double> sp(length);
-	double array [length];
-	
-	int t = 6;											//target nnz elements
-	for (int i = 0; i < t; ++i) {
-		int index = (int) (length * (int) randNum());
-		array[index] = i % 2 ? -1 : 1;
-	}
-	//print_ip_mat (m, n, "sparse_matrix", array);
-	//end sparse
-	*/
-
-	std::vector<double> sparse = {1, 2, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0, 3, 0, 5, 16};
-	//print_ip_mat(m, n, "sparse matrix manual", sparse);
-	
+	//std::vector<double> sparse = {1, 2, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0, 3, 0, 5, 16};
+	std::vector<double> sparse = {1, 2, 0, 0, -1, 0, 4, 0, 3, 0.5, 0, 2};
 	std::vector<double> A = sparse;
-
-	std::vector <double> val_A;
-	std::vector <int> col_idx_A, row_idx_A;
-	get_sorted_indices(lead_dim, lag_dim, A, val_A, col_idx_A, row_idx_A);				//get col indices of A									//matrix stored in row major
-	std::cout << "A matrix" << std::endl;
-	printMatrix(lead_dim, lag_dim, A);
-	std::cout << "A col idx" << std::endl;
-	printVec(col_idx_A);
-	std::cout << "A row idx" << std::endl;
-	printVec(row_idx_A);
-
 	std::vector<double> B = sparse;
-	std::cout << "B matrix" << std::endl;
-	printMatrix(lead_dim, lag_dim, B);
-	std::vector<double> Btrans (B.size());
-	transpose(lead_dim, lag_dim, B, Btrans);
-	std::cout << "B transpose matrix" << std::endl;
-	printMatrix(lead_dim, lag_dim, Btrans);			//print transposed matrix
+	
+	printMatrix(lead_dim, lag_dim, "matrix A", A);
 
-	std::vector <double> val_B;
-	std::vector <int> col_idx_B, row_idx_B;
-	get_sorted_indices(lead_dim, lag_dim, Btrans, val_B, col_idx_B, row_idx_B);			//swap lead and lag_dim of B to input transpose of B
-	std::cout << "BT col idx" << std::endl;
-	printVec(col_idx_B);
-	std::cout << "BT row idx" << std::endl;
-	printVec(row_idx_B);
-
-	std::vector<double> isect_cols, isect_rows;
-	isect(col_idx_A, col_idx_B, isect_cols);
-	isect(row_idx_A, row_idx_B, isect_rows);
-	std::cout << "set of col indices common to A and BT" << std::endl;
-	printVec(isect_cols);
-	std::cout << "set of row indices common to A and BT" << std::endl;
-	printVec(isect_rows);
 
 	return 0;
 }

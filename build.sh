@@ -8,6 +8,6 @@ cmake ../src/
 #make crs VERBOSE=1
 make dcsr VERBOSE=1
 #make spgemm VERBOSE=1
-#./crs 4
+#./crs col-major 3 4
 ./dcsr col-major
 #./spgemm col-major
