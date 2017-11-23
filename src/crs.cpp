@@ -89,6 +89,13 @@ void compressed_storage (const auto lead_dim, const auto lag_dim, auto sparse_ma
 	int nnz = val.size();
 	std::cout << "nnz " << nnz << std::endl;
 	idx_ptr.push_back(nnz);
+	for (int j = 0; j != lead_dim; ++j) {
+		for (int k = idx_ptr[j]; k != idx_ptr[j+1]-1; ++k) {
+			std::cout << "vat dis k " << k << std::endl;
+			auto v = val[k];
+			std::cout << "value for this k " << v << std::endl; 
+		}
+	}
 	/*
 	key_val_pair.push_back(val);
 	key_val_pair.push_back(row_ind);
