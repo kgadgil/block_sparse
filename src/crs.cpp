@@ -76,9 +76,6 @@ void compressed_storage (const auto lead_dim, const auto lag_dim, auto sparse_ma
 			if (new_r_c == true) {
 					//row_ptr.push_back(cnt);
 					idx_ptr.push_back(cnt);
-					if (i==lag_dim && j == lead_dim){
-						idx_ptr.push_back(cnt);
-					}
 					new_r_c = false;
 			}
 			if(sparse_matrix[ii] != 0){
@@ -102,27 +99,6 @@ void compressed_storage (const auto lead_dim, const auto lag_dim, auto sparse_ma
 		}
 	}
 	*/
-	/*
-	key_val_pair.push_back(val);
-	key_val_pair.push_back(row_ind);
-	key_val_pair.push_back(col_ind);
-	for (int i = 0; i < key_val_pair.size(); i++) {
-		for (int j = 0; j < key_val_pair[1].size(); j++) {
-			std::cout << key_val_pair[i][j] << std::endl;
-		}
-	}
-	*/
-
-	//location in val vector where new row starts
-	/*int row_elem = val.size();
-	for(int i = 0; i < row_ind.size(); i++){
-		for(int j = 0; j < col_ind.size(); j++){
-			row_ptr.push_back(val[i*row_elem + j]);			//FIX : logic for row_ptr
-		}
-	}
-	*/
-	
-
 	std::cout << "idx_ptr" << std::endl;
 	printVec(idx_ptr);
 	std::cout << "indices" << std::endl;
