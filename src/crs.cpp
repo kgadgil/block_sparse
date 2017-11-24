@@ -19,28 +19,19 @@ double randNum() {/* initialize random seed: */
 	return randx;
 }
 
-void printMatrix (const int lead_dim, const int lag_dim, auto msg, const auto mat) {
+void printMatrix (int rows, int cols, auto msg, auto matrix, auto which_major) {
 	std::cout << msg << std::endl;
-	for (int i = 0, ii=0; i != lag_dim; ++i) {
-		for (int j = 0; j != lead_dim; ++j, ++ii) {
-			std::cout << mat[ii] << "\t";
+	for (int i = 0; i != rows; ++i) {
+		for (int j = 0; j != cols; ++j) {
+			if (which_major == "row-major" || which_major == "rowmajor") {
+				std::cout << matrix[i*rows + j] << "\t";
+			}
+			else if (which_major == "col-major" || which_major == "colmajor") {
+				std::cout << matrix[j*rows + i] << "\t";
+			}
 		} std::cout << std::endl;
 	}
 }
-
-void print_ip_mat (auto lead_dim, auto lag_dim, auto msg, const auto mat){
-	std::cout << msg << std::endl;
-	int cnt = 0;
-	for (int i = 0; i != lag_dim*lead_dim; ++i){
-		std::cout << mat[i] << "\t";
-		cnt++;
-		if(cnt == lead_dim){					//row major: change to cols if col-major
-			std::cout << std::endl;
-			cnt = 0;
-		}
-	}
-}
-
 void random_denseMat(const auto lead_dim, const auto lag_dim, auto &mat_A){
 	for (int i = 0, ii = 0; i != lag_dim; ++i) {
 		for (int j = 0; j != lead_dim; ++j, ++ii) {
@@ -80,21 +71,21 @@ void compressed_storage (const auto lead_dim, const auto lag_dim, auto sparse_ma
 	bool new_r_c = false;
 	for(int i = 0, ii=0; i != lag_dim; ++i){				//dim+1 to get next val of row_idx
 		for(int j = 0; j != lead_dim; ++j, ++ii){
-			//if (j==0) 
-			new_r_c = true;
-			if(sparse_matrix[ii] != 0){
-				val.push_back(sparse_matrix[ii]);
-				//row_ind.push_back(i);
-				//col_ind.push_back(j);
-				indices.push_back(j);				//indices contain col_ind if rowmajor, row_ind if col-major
-				if (new_r_c == true) {
+			if (j==0) 
+				new_r_c = true;
+			if (new_r_c == true) {
 					//row_ptr.push_back(cnt);
 					idx_ptr.push_back(cnt);
 					if (i==lag_dim && j == lead_dim){
 						idx_ptr.push_back(cnt);
 					}
 					new_r_c = false;
-				}
+			}
+			if(sparse_matrix[ii] != 0){
+				val.push_back(sparse_matrix[ii]);
+				//row_ind.push_back(i);
+				//col_ind.push_back(j);
+				indices.push_back(j);				//indices contain col_ind if rowmajor, row_ind if col-major	
 				++cnt;
 			}
 		}
@@ -193,15 +184,8 @@ int main (int argc, char *argv[]) {
 	delete [] denseA;
 	*/
 	std::vector<double> rm = {1, 0, 4, 0.5, 2, -1, 0, 0, 0, 0, 3, 2};
-	std::vector<double> cm = {1, 2, 0, 0, -1, 0, 4, 0, 3, 0.5, 0, 2};
-	//printMatrix(lead_dim, lag_dim, "matrix A", cm);
-	//print_ip_mat(lead_dim, lag_dim, "matrix A", cm);
+	std::vector<double> cm = {1, 2, 0, 0, 0, 0, 4, 0, 3, 0.5, 0, 2};
+	printMatrix(m, n, "matrix A", cm, leading);
 	compressed_storage (lead_dim, lag_dim, cm);
-	std::cout << "new major printing func" << std::endl;
-	for (int i = 0, ii = 0; i != m; ++i) {
-		for (int j = 0; j != n; ++j, ++ii) {
-			std::cout << cm[j*m + i] << "\t";
-		}std::cout << std::endl;
-	}
 	return 0;
 }
