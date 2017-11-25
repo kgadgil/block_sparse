@@ -126,26 +126,33 @@ void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::v
 	}	
 }
 
-void convert_triples_to_csc(const int rows, const int cols, auto triples_A) {
+void convert_triples_to_csc(const int rows, const int cols, const auto triples_A, auto &num, auto &indices, auto &jc_csc) {
 	std::vector <int> row_idx, col_idx;
 	std::vector <double> val;
 	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
 		row_idx.push_back(std::get<0>(*i));
 		col_idx.push_back(std::get<1>(*i));
+		if (which_major == "col-major"|| which_major == "colmajor"){
+			indices.push_back(std::get<0>(*i));
+		}	
+		else if (which_major == "row-major" || which_major == "rowmajor"){
+			indices.push_back(std::get<1>(*i));
+		}
 		val.push_back(std::get<2>(*i));
 	}
+	/*
 	std::cout << "row indices" << std::endl;
 	printVec(row_idx);
 	std::cout << "col indices" << std::endl;
 	printVec(col_idx);
 	std::cout << "val" << std::endl;
 	printVec(val);
-	std::vector <int> jc_csc;
-	//jc_csc.push_back(0);
+	*/
+	
 	bool flag_jc = false;
 	int cnt = 0, tmp = 0;
 	for (int i = 0; i != cols; ++i){				//pythonic range-based for loops
-		for (int j = 0; j != col_idx.size(); ++j) {
+		for (int j = 0; j != indices.size(); ++j) {
 			if (j==0) {
 				flag_jc = true;
 				jc_csc.push_back(cnt);
@@ -156,7 +163,6 @@ void convert_triples_to_csc(const int rows, const int cols, auto triples_A) {
 		}
 	}
 	jc_csc.push_back(val.size());
-	printVec(jc_csc);
 }
 
 void get_sorted_indices(const auto lead_dim, const auto lag_dim, const auto sparse_matrix, auto &val, auto &indices) {
@@ -226,6 +232,9 @@ int main (int argc, char *argv[]) {
 	triples_A.push_back(std::make_tuple(3,6,0.3));
 	triples_A.push_back(std::make_tuple(1,7,0.4));
 
-	convert_triples_to_csc(9, 9, triples_A);
+	std::vector <int> col_ptrs, indices;
+	std::vector <double> num;
+	convert_triples_to_csc(9, 9, triples_A, num, indices, col_ptrs);
+	printVec(col_ptrs);
 	return 0;
 }
