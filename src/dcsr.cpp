@@ -161,8 +161,12 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		row_idx.push_back(std::get<0>(*i));
 		col_idx.push_back(std::get<1>(*i));
 		if (which_major == "col-major"|| which_major == "colmajor"){
-			indices.push_back(std::get<0>(*i));
-			jc_dcsc.push_back(std::get<1>(*i));
+			int r = std::get<0>(*i);
+			int c = std::get<1>(*i);
+			indices.push_back(r);
+			if (std::find(jc_dcsc.begin(), jc_dcsc.end(), c) == jc_dcsc.end()) {
+				jc_dcsc.push_back(c);
+			}
 		}	
 		else if (which_major == "row-major" || which_major == "rowmajor"){
 			indices.push_back(std::get<1>(*i));
@@ -186,16 +190,40 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 			}
 		}
 	}
-	jc_csc.push_back(nnz);
+	jc_csc.push_back(nnz);			//size of jc_csc = cols + 1
 	std::cout << "csc format jc" << std::endl;
 	printVec(jc_csc);
-	std::vector <int> diff_arr;
-	for (int i = 0; i != jc_csc.size()-1; ++i){
+	std::vector <int> d;
+	for (int i = 0; i != cols; ++i){
 		int tmp = jc_csc[i+1] - jc_csc[i];
-		diff_arr.push_back(tmp);
+		d.push_back(tmp);
 	}
 	std::cout << "diff arr" << std::endl;
-	printVec(diff_arr);
+	printVec(d);
+	//chunk size cf = (n+1)/nzc :: nzc = number of nonzero cols
+	int nzc = jc_dcsc.size();
+	std::cout << "nzc " << nzc << std::endl;
+	double cf = (double) (cols+1)/nzc;
+	std::cout << "cf " << cf << std::endl;
+	int upper_bound_cf = ceil(cf);
+	std::cout << "upper cf " << upper_bound_cf << std::endl;
+	
+	int cnt_aux = 0, cnt_cf = 0;
+	bool flag_cf = false;
+	for (int i = 0; i != d.size()+1; ++i) {
+		++cnt_cf;
+		if (d[i] != 0 && flag_cf == true) {
+			aux.push_back(cnt_aux);
+			++cnt_aux;
+			flag_cf = false;
+		}
+		if (cnt > 3) {
+			flag_cf = true;
+		}
+	}
+
+	std::cout << "aux" << std::endl;
+	printVec(aux);
 }
 
 void get_sorted_indices(const auto lead_dim, const auto lag_dim, const auto sparse_matrix, auto &val, auto &indices) {
@@ -286,12 +314,13 @@ int main (int argc, char *argv[]) {
 	std::vector <double> num_dcsc;
 
 	convert_triples_to_dcsc(9, 9, triples_A, num_dcsc, idx_dcsc, cp_dcsc, jc_dcsc, aux);
-	/*std::cout << "num" << std::endl;
+	/*
+	std::cout << "num" << std::endl;
 	printVec(num_dcsc);
 	std::cout << "jc_dcsc" << std::endl;
 	printVec(jc_dcsc);
 	std::cout << "cp_dcsc" << std::endl;
 	printVec(cp_dcsc);
-	*/	
+	*/
 	return 0;
 }
