@@ -287,14 +287,20 @@ void access_elem_in_matrix(const auto i, const auto j, const auto nnz, const aut
 	int s = aux[idx];
 	int e = aux[idx+1] - 1;
 	std::cout << "start " << s << " end " << e << std::endl;
-	auto start = std::begin(jc) + s;
-	auto end = std::begin(jc) + e;
+	std::vector <int> vec = {4,2,1,3,5,6,2,6,3,1};
+	auto end = vec.begin() + 5;
+	for (auto it = vec.begin(); it <= end; it++) {
+		std::cout << "value in vec " << *it << std::endl;	//gives value at that point in vector
+		std::cout << "idx in vec " << distance(vec.begin(),it) << std::endl;
+	}
+
+	/*auto end = jc.begin() + e;
 	int pos;
-	for (auto m = start; m <= end; ++m) {
-		if (j == *m) {
-			std::cout << "found element " << j << " in " << "jc[" << *m << "]" << std::endl;
-			pos = *m;
-		}
+	int iter_col = std::find(start, end, j);
+	if (iter_col != end) {
+		auto dist = std::find(jc.begin(), jc.end(), j) - jc.begin();
+		std::cout << "found element " << j << " in " << "jc[" << dist << "]" << std::endl;
+		pos = dist;
 	}
 	int sc = cp[pos];
 	int ec = cp[pos+1] - 1;
@@ -302,37 +308,13 @@ void access_elem_in_matrix(const auto i, const auto j, const auto nnz, const aut
 	auto startc = std::begin(ir) + sc;
 	auto endc = std::begin(ir) + ec;
 	int posc;
-	for (auto n = startc; n <= endc; ++n) {
-		if (i == *n) {
-			std::cout << "found element " << i << " in " << "ir[" << *n << "]" << std::endl;
-			posc = *n;
-		}
+	if (i == *n) {
+		int dist = std::distance (std::begin(cp), n);
+		std::cout << "found element " << i << " in " << "ir[" << dist << "]" << std::endl;
+		posc = dist;
 	}
-	std::cout << "element found! Value is " << val[posc] << std::endl;
-	
+	std::cout << "element found! Value is " << val[posc] << std::endl;*/
 
-	/*
-	auto it_col = std::find(start, end, j);
-	if(it_col != end){
-		std::cout << "j=1 found in col[" << distance(jc.begin(), it_col) << std::endl;
-		pos = distance(jc.begin(), it_col);
-		int sc = cp[pos];
-		int ec = cp[pos+1] - 1;
-		std::cout << "startc " << sc << " endc " << ec << std::endl;
-		auto startc = ir.begin() + sc;
-		auto endc = ir.begin() + ec;
-		int posc;
-		auto it_row = std::find (startc, endc, i);
-		if(it_row != endc){
-			std::cout << "i=1 found in row[" << distance(ir.begin(), it_row) << std::endl;
-			posc = distance(ir.begin(), it_row);
-			std::cout << "element found! Value is " << val[posc] << std::endl;
-		}
-	}
-	else {
-		std::cout << "element not found" << std::endl;
-	}
-	*/
 }
 
 int main (int argc, char *argv[]) {
