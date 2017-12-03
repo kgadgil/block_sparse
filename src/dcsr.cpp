@@ -206,11 +206,25 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 	int cnt_aux = 0, cnt_cf = 0;
 	bool flag_cf = true;
 	for (int i = 0; i != cols+1; ++i){
+		//std::cout << "cnt_cf " << cnt_cf << std::endl;
+		//std::cout << "cnt_aux " << cnt_aux << std::endl;
 		int tmp = jc_csc[i+1] - jc_csc[i];
 		d.push_back(tmp);
 		if (tmp != 0) {
 			cp.push_back(jc_csc[i]);
+			if (flag_cf == true) {
+				aux.push_back(cnt_aux);
+				flag_cf = false;
+			}
+			++cnt_aux;
 		}
+
+		++cnt_cf;
+		if (cnt_cf % upper_bound_cf == 0) {
+			flag_cf = true;
+			cnt_cf = 0;
+		}
+		
 	}
 	
 	std::cout << "diff arr" << std::endl;
@@ -219,31 +233,6 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 	std::cout << "cp arr" << std::endl;
 	printVec(cp);
 	
-	for (int i = 0; i <= cols+1; ++i) {
-		//std::cout << "cnt_cf " << cnt_cf << std::endl;
-		//std::cout << "flag_cf at begin of loop " << flag_cf << std::endl;
-		
-		if (std::find(std::begin(jc_dcsc), std::end(jc_dcsc), i) != std::end(jc_dcsc)) {
-			//std::cout << "elem found " << i << std::endl;
-			//std::cout << "flag_cf before aux push_back " << flag_cf << std::endl;
-			if (flag_cf == true) {
-				aux.push_back(cnt_aux);
-				flag_cf = false;
-			}
-			//std::cout << "flag_cf " << flag_cf << std::endl;
-			++cnt_aux;
-		}
-		++cnt_cf;
-		if (cnt_cf % upper_bound_cf == 0) {
-			flag_cf = true;
-			cnt_cf = 0;
-		}
-		//last elem of aux points to one past last elem of jc
-		//refer fig in paper
-		if (i == cols+1) {
-			aux.push_back(cnt_aux);
-		}
-	}
 	//pushback total number of cols to aux
 	aux.push_back(nzc);
 	std::cout << "aux" << std::endl;
@@ -318,11 +307,18 @@ int main (int argc, char *argv[]) {
 	triples_A.push_back(std::make_tuple(1,7,0.4));
 
 	//functionality to sort triples before/after func
+	//right now has to be sorted by cols
 	my_tuple eg_A;
 	eg_A.push_back(std::make_tuple(0,0,0.2));
 	eg_A.push_back(std::make_tuple(0,1,0.3));
-	eg_A.push_back(std::make_tuple(1,4,0.4));
+	eg_A.push_back(std::make_tuple(1,1,0.4));
 	eg_A.push_back(std::make_tuple(8,5,0.1));
+
+	my_tuple whiteboard;
+	whiteboard.push_back(std::make_tuple(2,0,1));
+	whiteboard.push_back(std::make_tuple(2,2,2));
+	whiteboard.push_back(std::make_tuple(0,3,3));
+	whiteboard.push_back(std::make_tuple(2,4,4));
 
 	std::vector <int> col_ptrs, indices;
 	std::vector <double> num;
