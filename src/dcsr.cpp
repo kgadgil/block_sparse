@@ -311,7 +311,28 @@ void access_elem_in_matrix(const auto i, const auto j, const auto nnz, const aut
 	std::cout << "element found! Value is " << val[posc] << std::endl;
 	
 
-	
+	/*
+	auto it_col = std::find(start, end, j);
+	if(it_col != end){
+		std::cout << "j=1 found in col[" << distance(jc.begin(), it_col) << std::endl;
+		pos = distance(jc.begin(), it_col);
+		int sc = cp[pos];
+		int ec = cp[pos+1] - 1;
+		std::cout << "startc " << sc << " endc " << ec << std::endl;
+		auto startc = ir.begin() + sc;
+		auto endc = ir.begin() + ec;
+		int posc;
+		auto it_row = std::find (startc, endc, i);
+		if(it_row != endc){
+			std::cout << "i=1 found in row[" << distance(ir.begin(), it_row) << std::endl;
+			posc = distance(ir.begin(), it_row);
+			std::cout << "element found! Value is " << val[posc] << std::endl;
+		}
+	}
+	else {
+		std::cout << "element not found" << std::endl;
+	}
+	*/
 }
 
 int main (int argc, char *argv[]) {
