@@ -10,6 +10,7 @@ DOUBLY COMPRESSED SPARSE ROWS
 #include <tuple>
 #include <cblas.h>
 #include <algorithm>				//Checking if v contains the element x
+#include <iterator>
 
 std::string which_major;
 int leading_dim, laggging_dim;
@@ -155,7 +156,7 @@ void convert_triples_to_csc(const int rows, const int cols, const auto triples_A
 	jc_csc.push_back(val.size());
 }
 
-void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux) {
+void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux, auto &nnz, auto &nzc, auto &upper_bound_cf) {
 	std::vector <int> row_idx, col_idx, jc_csc;
 	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
 		row_idx.push_back(std::get<0>(*i));
@@ -175,16 +176,16 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		val.push_back(std::get<2>(*i));
 	}
 
-	int nnz = val.size();
-	std::cout << "nnz " << nnz << std::endl;
+	nnz = val.size();
+	
 	int cnt = 0;
 	//chunk size cf = (n+1)/nzc :: nzc = number of nonzero cols
-	int nzc = jc_dcsc.size();
-	std::cout << "nzc " << nzc << std::endl;
+	nzc = jc_dcsc.size();
+	
 	double cf = (double) (cols+1)/nzc;
-	std::cout << "cf " << cf << std::endl;
-	int upper_bound_cf = ceil(cf);
-	std::cout << "upper cf " << upper_bound_cf << std::endl;
+	//std::cout << "cf " << cf << std::endl;
+	upper_bound_cf = ceil(cf);
+	
 	
 	for (int i = 0; i != cols; ++i){
 		for (int j = 0; j != nnz; ++j) {
@@ -200,8 +201,8 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		}
 	}
 	jc_csc.push_back(nnz);			//size of jc_csc = cols + 1
-	std::cout << "csc format jc" << std::endl;
-	printVec(jc_csc);
+	//std::cout << "csc format jc" << std::endl;
+	//printVec(jc_csc);
 	std::vector <int> d, cp;
 	int cnt_aux = 0, cnt_cf = 0;
 	bool flag_cf = true;
@@ -226,17 +227,18 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		}
 		
 	}
-	
+	/*
 	std::cout << "diff arr" << std::endl;
 	printVec(d);
 	std::cout << "last element of d " << d[cols] << std::endl;
 	std::cout << "cp arr" << std::endl;
 	printVec(cp);
-	
+	*/
+
 	//pushback total number of cols to aux
 	aux.push_back(nzc);
-	std::cout << "aux" << std::endl;
-	printVec(aux);
+	//std::cout << "aux" << std::endl;
+	//printVec(aux);
 }
 
 void get_sorted_indices(const auto lead_dim, const auto lag_dim, const auto sparse_matrix, auto &val, auto &indices) {
@@ -278,6 +280,38 @@ void get_sorted_indices(const auto lead_dim, const auto lag_dim, const auto spar
 	//std::cout << "row ptr in csr storage" << std::endl;
 	//printVec(row_ptr);
 
+}
+
+void access_elem_in_matrix(const auto i, const auto j, const auto nnz, const auto nzc, const auto cf, const auto &val, const auto &ir, const auto &jc, const auto &cp, const auto &aux) {
+	int idx = floor(j/cf);
+	int s = aux[idx];
+	int e = aux[idx+1] - 1;
+	std::cout << "start " << s << " end " << e << std::endl;
+	auto start = std::begin(jc) + s;
+	auto end = std::begin(jc) + e;
+	int pos;
+	for (auto m = start; m <= end; ++m) {
+		if (j == *m) {
+			std::cout << "found element " << j << " in " << "jc[" << *m << "]" << std::endl;
+			pos = *m;
+		}
+	}
+	int sc = cp[pos];
+	int ec = cp[pos+1] - 1;
+	std::cout << "startc " << sc << " endc " << ec << std::endl;
+	auto startc = std::begin(ir) + sc;
+	auto endc = std::begin(ir) + ec;
+	int posc;
+	for (auto n = startc; n <= endc; ++n) {
+		if (i == *n) {
+			std::cout << "found element " << i << " in " << "ir[" << *n << "]" << std::endl;
+			posc = *n;
+		}
+	}
+	std::cout << "element found! Value is " << val[posc] << std::endl;
+	
+
+	
 }
 
 int main (int argc, char *argv[]) {
@@ -330,17 +364,26 @@ int main (int argc, char *argv[]) {
 	std::cout << "jc_csc_ptrs" << std::endl;
 	printVec(col_ptrs);
 	*/
-	std::vector <int> idx_dcsc, cp_dcsc, jc_dcsc, aux;
+	std::vector <int> ir, cp_dcsc, jc_dcsc, aux;
 	std::vector <double> num_dcsc;
+	int nnz, nzc, cf;
+	convert_triples_to_dcsc(9, 9, eg_A, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
 
-	convert_triples_to_dcsc(9, 9, eg_A, num_dcsc, idx_dcsc, cp_dcsc, jc_dcsc, aux);
-	
+	std::cout << "nnz " << nnz << std::endl;
+	std::cout << "nzc " << nzc << std::endl;
+	std::cout << "upper cf " << cf << std::endl;
 	std::cout << "num" << std::endl;
 	printVec(num_dcsc);
-	std::cout << "jc_dcsc" << std::endl;
+	std::cout << "ir" << std::endl;
+	printVec(ir);
+	std::cout << "jc" << std::endl;
 	printVec(jc_dcsc);
-	std::cout << "cp_dcsc" << std::endl;
+	std::cout << "cp" << std::endl;
 	printVec(cp_dcsc);
-	
+	std::cout << "aux" << std::endl;
+	printVec(aux);
+
+	std::cout << "search for element A(1,1)" << std::endl;
+	access_elem_in_matrix(1, 1, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux);
 	return 0;
 }
