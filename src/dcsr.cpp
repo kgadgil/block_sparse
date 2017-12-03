@@ -164,7 +164,7 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 			int r = std::get<0>(*i);
 			int c = std::get<1>(*i);
 			indices.push_back(r);
-			if (std::find(jc_dcsc.begin(), jc_dcsc.end(), c) == jc_dcsc.end()) {
+			if (std::find(jc_dcsc.begin(), jc_dcsc.end(), c) == jc_dcsc.end()) {	//if elem not found
 				jc_dcsc.push_back(c);
 			}
 		}	
@@ -174,9 +174,18 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		}
 		val.push_back(std::get<2>(*i));
 	}
+
 	int nnz = val.size();
 	std::cout << "nnz " << nnz << std::endl;
 	int cnt = 0;
+	//chunk size cf = (n+1)/nzc :: nzc = number of nonzero cols
+	int nzc = jc_dcsc.size();
+	std::cout << "nzc " << nzc << std::endl;
+	double cf = (double) (cols+1)/nzc;
+	std::cout << "cf " << cf << std::endl;
+	int upper_bound_cf = ceil(cf);
+	std::cout << "upper cf " << upper_bound_cf << std::endl;
+	
 	for (int i = 0; i != cols; ++i){
 		for (int j = 0; j != nnz; ++j) {
 			if (j == 0){
@@ -193,35 +202,50 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 	jc_csc.push_back(nnz);			//size of jc_csc = cols + 1
 	std::cout << "csc format jc" << std::endl;
 	printVec(jc_csc);
-	std::vector <int> d;
-	for (int i = 0; i != cols; ++i){
+	std::vector <int> d, cp;
+	int cnt_aux = 0, cnt_cf = 0;
+	bool flag_cf = true;
+	for (int i = 0; i != cols+1; ++i){
 		int tmp = jc_csc[i+1] - jc_csc[i];
 		d.push_back(tmp);
+		if (tmp != 0) {
+			cp.push_back(jc_csc[i]);
+		}
 	}
+	
 	std::cout << "diff arr" << std::endl;
 	printVec(d);
-	//chunk size cf = (n+1)/nzc :: nzc = number of nonzero cols
-	int nzc = jc_dcsc.size();
-	std::cout << "nzc " << nzc << std::endl;
-	double cf = (double) (cols+1)/nzc;
-	std::cout << "cf " << cf << std::endl;
-	int upper_bound_cf = ceil(cf);
-	std::cout << "upper cf " << upper_bound_cf << std::endl;
+	std::cout << "last element of d " << d[cols] << std::endl;
+	std::cout << "cp arr" << std::endl;
+	printVec(cp);
 	
-	int cnt_aux = 0, cnt_cf = 0;
-	bool flag_cf = false;
-	for (int i = 0; i != d.size()+1; ++i) {
-		++cnt_cf;
-		if (d[i] != 0 && flag_cf == true) {
-			aux.push_back(cnt_aux);
+	for (int i = 0; i <= cols+1; ++i) {
+		//std::cout << "cnt_cf " << cnt_cf << std::endl;
+		//std::cout << "flag_cf at begin of loop " << flag_cf << std::endl;
+		
+		if (std::find(std::begin(jc_dcsc), std::end(jc_dcsc), i) != std::end(jc_dcsc)) {
+			//std::cout << "elem found " << i << std::endl;
+			//std::cout << "flag_cf before aux push_back " << flag_cf << std::endl;
+			if (flag_cf == true) {
+				aux.push_back(cnt_aux);
+				flag_cf = false;
+			}
+			//std::cout << "flag_cf " << flag_cf << std::endl;
 			++cnt_aux;
-			flag_cf = false;
 		}
-		if (cnt > 3) {
+		++cnt_cf;
+		if (cnt_cf % upper_bound_cf == 0) {
 			flag_cf = true;
+			cnt_cf = 0;
+		}
+		//last elem of aux points to one past last elem of jc
+		//refer fig in paper
+		if (i == cols+1) {
+			aux.push_back(cnt_aux);
 		}
 	}
-
+	//pushback total number of cols to aux
+	aux.push_back(nzc);
 	std::cout << "aux" << std::endl;
 	printVec(aux);
 }
@@ -313,14 +337,14 @@ int main (int argc, char *argv[]) {
 	std::vector <int> idx_dcsc, cp_dcsc, jc_dcsc, aux;
 	std::vector <double> num_dcsc;
 
-	convert_triples_to_dcsc(9, 9, triples_A, num_dcsc, idx_dcsc, cp_dcsc, jc_dcsc, aux);
-	/*
+	convert_triples_to_dcsc(9, 9, eg_A, num_dcsc, idx_dcsc, cp_dcsc, jc_dcsc, aux);
+	
 	std::cout << "num" << std::endl;
 	printVec(num_dcsc);
 	std::cout << "jc_dcsc" << std::endl;
 	printVec(jc_dcsc);
 	std::cout << "cp_dcsc" << std::endl;
 	printVec(cp_dcsc);
-	*/
+	
 	return 0;
 }
