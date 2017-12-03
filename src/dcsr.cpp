@@ -282,39 +282,76 @@ void get_sorted_indices(const auto lead_dim, const auto lag_dim, const auto spar
 
 }
 
-void access_elem_in_matrix(const auto i, const auto j, const auto nnz, const auto nzc, const auto cf, const auto &val, const auto &ir, const auto &jc, const auto &cp, const auto &aux) {
+void access_elem_in_matrix(const auto &i, const auto &j, const auto nnz, const auto nzc, const auto cf, const auto &val, const auto &ir, const auto &jc, const auto &cp, const auto &aux, const auto &rows, const auto &cols) {
+	/*
+	std::vector <int> vec = {4,2,1,3,5,6,2,9,3,1};
+	auto starts = vec.begin();
+	auto ende = vec.begin() + 3;
+	for (auto it = starts; it <= ende; it++) {
+		//std::cout << "value in vec " << *it << std::endl;	//gives value at that point in vector
+		//std::cout << "idx in vec " << distance(starts,it) << std::endl;
+		if (*it == 3) {
+			std::cout << "first code: elem found" << std::endl;
+			std::cout << "value in vec " << *it << std::endl;	//gives value at that point in vector
+			std::cout << "idx in vec " << distance(starts,it) << std::endl;
+		}
+	}
+	auto find_elem = std::find(starts, ende, 3);
+	if (find_elem != ende) {
+		std::cout << "FOUND" << std::endl;
+		std::cout << "value in vec " << *find_elem << std::endl;	//gives value at that point in vector
+		std::cout << "idx in vec " << distance(starts,find_elem) << std::endl;
+	}
+	else {
+		std::cout << "second code " << std::endl;
+		std::cout << "element not found " << std::endl;
+	}
+	*/
+	if (i > rows || j > cols) {
+		std::cout << "Error : Index provided is greater than matrix dimensions." << std::endl;
+	}
+
+	std::cout << "searching for element A(" << i << ", " << j << ")..." << std::endl;
 	int idx = floor(j/cf);
 	int s = aux[idx];
-	int e = aux[idx+1] - 1;
-	std::cout << "start " << s << " end " << e << std::endl;
-	std::vector <int> vec = {4,2,1,3,5,6,2,6,3,1};
-	auto end = vec.begin() + 5;
-	for (auto it = vec.begin(); it <= end; it++) {
-		std::cout << "value in vec " << *it << std::endl;	//gives value at that point in vector
-		std::cout << "idx in vec " << distance(vec.begin(),it) << std::endl;
-	}
+	int e = aux[idx+1];
+	//std::cout << "start " << s << " end " << e << std::endl;
+	//std::cout << "jc" << std::endl;
+	//printVec(jc);
 
-	/*auto end = jc.begin() + e;
-	int pos;
-	int iter_col = std::find(start, end, j);
+	auto start = jc.begin() + s;
+	auto end = jc.begin() + e;
+	
+	int pos, posc;
+	auto iter_col = std::find(start, end, j);
 	if (iter_col != end) {
-		auto dist = std::find(jc.begin(), jc.end(), j) - jc.begin();
-		std::cout << "found element " << j << " in " << "jc[" << dist << "]" << std::endl;
-		pos = dist;
-	}
-	int sc = cp[pos];
-	int ec = cp[pos+1] - 1;
-	std::cout << "startc " << sc << " endc " << ec << std::endl;
-	auto startc = std::begin(ir) + sc;
-	auto endc = std::begin(ir) + ec;
-	int posc;
-	if (i == *n) {
-		int dist = std::distance (std::begin(cp), n);
-		std::cout << "found element " << i << " in " << "ir[" << dist << "]" << std::endl;
-		posc = dist;
-	}
-	std::cout << "element found! Value is " << val[posc] << std::endl;*/
+		pos = distance(jc.begin(), iter_col);
+		//std::cout << "found value j = " << j << " at index " << "jc[" << distance(jc.begin(), iter_col) << "]" << std::endl;
+		//std::cout << "found value j = " << j << " at index " << "jc[" << pos << "]" << std::endl;
+		
+		int sc = cp[pos];
+		int ec = cp[pos+1];
+		//std::cout << "startc " << sc << " endc " << ec << std::endl;
+		auto startc = ir.begin() + sc;
+		auto endc = ir.begin() + ec;
+		
+		//std::cout << "ir" << std::endl;
+		//printVec(ir);
 
+		auto iter_row = std::find (startc, endc, i);
+		if (iter_row != endc) {
+			posc = distance(ir.begin(), iter_row);
+			//std::cout << "Found element " << i << " in " << "ir[" << distance(ir.begin(), iter_row) << "]" << std::endl;
+			//std::cout << "found element " << i << " in " << "ir[" << posc << "]" << std::endl;
+			std::cout << "Element found! Value is " << val[posc] << std::endl;
+		}
+		else {
+			std::cout << "Element is 0" << std::endl;
+		}
+	}
+	else 
+		std::cout << "Element is 0" << std::endl;
+	
 }
 
 int main (int argc, char *argv[]) {
@@ -327,6 +364,10 @@ int main (int argc, char *argv[]) {
 	check_major(m, n, lead_dim, lag_dim);
 	//std::cout << "row/col major? " << which_major << std::endl;
 	//std::cout << "leading_dim " << lead_dim << " lag_dim " << lag_dim << std::endl;
+	int rows, cols;
+	get_dim_from_major(lead_dim, lag_dim, rows, cols);
+	std::cout << "rows " << rows << " cols " << cols << std::endl;
+
 	//std::vector<double> sparse = {1, 2, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0, 3, 0, 5, 16};
 	std::vector<double> sparse = {1, 2, 0, 0, 0, 0, 4, 0, 3, 0.5, 0, 2};
 	std::vector<double> A = sparse;
@@ -359,7 +400,7 @@ int main (int argc, char *argv[]) {
 
 	std::vector <int> col_ptrs, indices;
 	std::vector <double> num;
-	convert_triples_to_csc(9, 9, triples_A, num, indices, col_ptrs);
+	convert_triples_to_csc(rows, cols, triples_A, num, indices, col_ptrs);
 	/*std::cout << "num" << std::endl;
 	printVec(num);
 	std::cout << "row indices" << std::endl;
@@ -370,14 +411,14 @@ int main (int argc, char *argv[]) {
 	std::vector <int> ir, cp_dcsc, jc_dcsc, aux;
 	std::vector <double> num_dcsc;
 	int nnz, nzc, cf;
-	convert_triples_to_dcsc(9, 9, eg_A, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
+	convert_triples_to_dcsc(rows, cols, triples_A, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
 
 	std::cout << "nnz " << nnz << std::endl;
 	std::cout << "nzc " << nzc << std::endl;
 	std::cout << "upper cf " << cf << std::endl;
 	std::cout << "num" << std::endl;
 	printVec(num_dcsc);
-	std::cout << "ir" << std::endl;
+	/*std::cout << "ir" << std::endl;
 	printVec(ir);
 	std::cout << "jc" << std::endl;
 	printVec(jc_dcsc);
@@ -385,8 +426,7 @@ int main (int argc, char *argv[]) {
 	printVec(cp_dcsc);
 	std::cout << "aux" << std::endl;
 	printVec(aux);
-
-	std::cout << "search for element A(1,1)" << std::endl;
-	access_elem_in_matrix(1, 1, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux);
+	*/
+	access_elem_in_matrix(3, 5, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
 	return 0;
 }
