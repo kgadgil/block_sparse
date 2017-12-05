@@ -418,6 +418,7 @@ int main (int argc, char *argv[]) {
 	dense1.push_back(std::make_tuple(1,0,3));
 	dense1.push_back(std::make_tuple(1,1,4));
 
+	//sort tuples before passing it to convert_dcsc functions
 	std::cout << "unsorted tuple" << std::endl;
 	print_tuples(dense1);
 	std::sort(begin(dense1), end(dense1), 
