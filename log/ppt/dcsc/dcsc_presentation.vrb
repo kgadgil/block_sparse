@@ -1,0 +1,5 @@
+\frametitle{CSC example - Column Major}
+\begin{enumerate}
+		\item $O(n + nnz)$ comes from JC array of size $n+1$
+	\end{enumerate}
+	\footnotetext{[1] Buluc, A., \& Gilbert, J. R. (2008). On the Representation and Multiplication of Hypersparse Matrices. https://doi.org/10.1109/IPDPS.2008.4536313}

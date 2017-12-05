@@ -127,9 +127,9 @@ void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::v
 	}	
 }
 
-void convert_triples_to_csc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &jc_csc) {
+void convert_triples_to_csc(const int rows, const int cols, const auto triples_mat, auto &val, auto &indices, auto &jc_csc) {
 	std::vector <int> row_idx, col_idx;
-	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
+	for (my_tuple::const_iterator i = triples_mat.begin(); i != triples_mat.end(); ++i) {
 		row_idx.push_back(std::get<0>(*i));
 		col_idx.push_back(std::get<1>(*i));
 		if (which_major == "col-major"|| which_major == "colmajor"){
@@ -156,18 +156,27 @@ void convert_triples_to_csc(const int rows, const int cols, const auto triples_A
 	jc_csc.push_back(val.size());
 }
 
-void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux, auto &nnz, auto &nzc, auto &upper_bound_cf) {
+void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_mat, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux, auto &nnz, auto &nzc, auto &upper_bound_cf) {
+	//sort tuple before using
+	std::cout << "unsorted tuple" << std::endl;
+	print_tuples(triples_mat);
+	std::sort(begin(triples_mat), end(triples_mat), 
+    	[](std::tuple<int, int, double> const &t1, std::tuple<int, int, double> const &t2) {
+      	  return std::get<1>(t1) < std::get<1>(t2);
+   		}
+	);
+	std::cout << "sorted tuple" << std::endl;
+	print_tuples(dense1);
+
 	std::vector <int> row_idx, col_idx, jc_csc;
-	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
+	for (my_tuple::const_iterator i = triples_mat.begin(); i != triples_mat.end(); ++i) {
 		row_idx.push_back(std::get<0>(*i));
 		col_idx.push_back(std::get<1>(*i));
 		if (which_major == "col-major"|| which_major == "colmajor"){
 			int r = std::get<0>(*i);
 			int c = std::get<1>(*i);
 			indices.push_back(r);
-			if (std::find(jc_dcsc.begin(), jc_dcsc.end(), c) == jc_dcsc.end()) {	//if elem not found
-				jc_dcsc.push_back(c);
-			}
+			jc_dcsc.push_back(c);
 		}	
 		else if (which_major == "row-major" || which_major == "rowmajor"){
 			indices.push_back(std::get<1>(*i));
@@ -201,6 +210,9 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		}
 	}
 	jc_csc.push_back(nnz);			//size of jc_csc = cols + 1
+	
+	//pushback #nnz to cp
+	cp_dcsc.push_back(nnz);
 	//std::cout << "csc format jc" << std::endl;
 	//printVec(jc_csc);
 	std::vector <int> d, cp;
@@ -227,13 +239,16 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		}
 		
 	}
+
 	/*
 	std::cout << "diff arr" << std::endl;
 	printVec(d);
 	std::cout << "last element of d " << d[cols] << std::endl;
-	std::cout << "cp arr" << std::endl;
-	printVec(cp);
 	*/
+	cp.push_back(nnz);
+	//std::cout << "cp arr" << std::endl;
+	//printVec(cp);
+	
 
 	//pushback total number of cols to aux
 	aux.push_back(nzc);
@@ -310,55 +325,56 @@ void access_elem_in_matrix(const auto &i, const auto &j, const auto nnz, const a
 	if (i > rows || j > cols) {
 		std::cout << "Error : Index provided is greater than matrix dimensions." << std::endl;
 	}
+	else{
+		std::cout << "searching for element A(" << i << ", " << j << ")..." << std::endl;
+		int idx = floor(j/cf);
+		int s = aux[idx];
+		int e = aux[idx+1];
+		//std::cout << "start " << s << " end " << e << std::endl;
+		//std::cout << "jc" << std::endl;
+		//printVec(jc);
 
-	std::cout << "searching for element A(" << i << ", " << j << ")..." << std::endl;
-	int idx = floor(j/cf);
-	int s = aux[idx];
-	int e = aux[idx+1];
-	//std::cout << "start " << s << " end " << e << std::endl;
-	//std::cout << "jc" << std::endl;
-	//printVec(jc);
-
-	auto start = jc.begin() + s;
-	auto end = jc.begin() + e;
-	
-	int pos, posc;
-	auto iter_col = std::find(start, end, j);
-	if (iter_col != end) {
-		pos = distance(jc.begin(), iter_col);
-		//std::cout << "found value j = " << j << " at index " << "jc[" << distance(jc.begin(), iter_col) << "]" << std::endl;
-		//std::cout << "found value j = " << j << " at index " << "jc[" << pos << "]" << std::endl;
+		auto start = jc.begin() + s;
+		auto end = jc.begin() + e;
 		
-		int sc = cp[pos];
-		int ec = cp[pos+1];
-		//std::cout << "startc " << sc << " endc " << ec << std::endl;
-		auto startc = ir.begin() + sc;
-		auto endc = ir.begin() + ec;
-		
-		//std::cout << "ir" << std::endl;
-		//printVec(ir);
+		int pos, posc;
+		auto iter_col = std::find(start, end, j);
+		if (iter_col != end) {
+			pos = distance(jc.begin(), iter_col);
+			//std::cout << "found value j = " << j << " at index " << "jc[" << distance(jc.begin(), iter_col) << "]" << std::endl;
+			//std::cout << "found value j = " << j << " at index " << "jc[" << pos << "]" << std::endl;
+			
+			int sc = cp[pos];
+			int ec = cp[pos+1];
+			//std::cout << "startc " << sc << " endc " << ec << std::endl;
+			auto startc = ir.begin() + sc;
+			auto endc = ir.begin() + ec;
+			
+			//std::cout << "ir" << std::endl;
+			//printVec(ir);
 
-		auto iter_row = std::find (startc, endc, i);
-		if (iter_row != endc) {
-			posc = distance(ir.begin(), iter_row);
-			//std::cout << "Found element " << i << " in " << "ir[" << distance(ir.begin(), iter_row) << "]" << std::endl;
-			//std::cout << "found element " << i << " in " << "ir[" << posc << "]" << std::endl;
-			std::cout << "Element found! Value is " << val[posc] << std::endl;
+			auto iter_row = std::find (startc, endc, i);
+			if (iter_row != endc) {
+				posc = distance(ir.begin(), iter_row);
+				//std::cout << "Found element " << i << " in " << "ir[" << distance(ir.begin(), iter_row) << "]" << std::endl;
+				//std::cout << "found element " << i << " in " << "ir[" << posc << "]" << std::endl;
+				std::cout << "Element found! Value is " << val[posc] << std::endl;
+			}
+			else {
+				std::cout << "Element is 0" << std::endl;
+			}
 		}
-		else {
+		else 
 			std::cout << "Element is 0" << std::endl;
-		}
 	}
-	else 
-		std::cout << "Element is 0" << std::endl;
-	
 }
 
 int main (int argc, char *argv[]) {
-	//int m, n;
-	//m = n = 4;
-	int m = atoi(argv[2]);
-	int n = atoi(argv[3]);
+	//int m = atoi(argv[2]);
+	//int n = atoi(argv[3]);
+	
+	int m, n;
+	m = n = 2;
 	which_major = argv[1];
 	int lead_dim, lag_dim;					//for both matrices but two diff for multiplication
 	check_major(m, n, lead_dim, lag_dim);
@@ -378,47 +394,66 @@ int main (int argc, char *argv[]) {
 	//get_sorted_indices(lead_dim, lag_dim, A, val_A, idx);				//get col indices of A									//matrix stored in row major
 	
 	//given triples
-	my_tuple triples_A;
-	triples_A.push_back(std::make_tuple(5,0,0.1));
-	triples_A.push_back(std::make_tuple(7,0,0.2));
-	triples_A.push_back(std::make_tuple(3,6,0.3));
-	triples_A.push_back(std::make_tuple(1,7,0.4));
+	my_tuple triples_mat;
+	triples_mat.push_back(std::make_tuple(5,0,0.1));
+	triples_mat.push_back(std::make_tuple(7,0,0.2));
+	triples_mat.push_back(std::make_tuple(3,6,0.3));
+	triples_mat.push_back(std::make_tuple(1,7,0.4));
 
 	//functionality to sort triples before/after func
 	//right now has to be sorted by cols
+	//9*9 matrix
 	my_tuple eg_A;
 	eg_A.push_back(std::make_tuple(0,0,0.2));
 	eg_A.push_back(std::make_tuple(0,1,0.3));
 	eg_A.push_back(std::make_tuple(1,1,0.4));
 	eg_A.push_back(std::make_tuple(8,5,0.1));
 
+	//4*6 matrix
 	my_tuple whiteboard;
 	whiteboard.push_back(std::make_tuple(2,0,1));
 	whiteboard.push_back(std::make_tuple(2,2,2));
 	whiteboard.push_back(std::make_tuple(0,3,3));
 	whiteboard.push_back(std::make_tuple(2,4,4));
 
+	my_tuple beamer; //6*6 matrix
+	beamer.push_back(std::make_tuple(0,1,1));
+	beamer.push_back(std::make_tuple(3,1,2));
+	beamer.push_back(std::make_tuple(2,2,3));
+	beamer.push_back(std::make_tuple(5,5,4));
+
+	//2*2matrix
+	my_tuple dense1;
+	dense1.push_back(std::make_tuple(0,0,1));
+	dense1.push_back(std::make_tuple(0,1,2));
+	dense1.push_back(std::make_tuple(1,0,3));
+	dense1.push_back(std::make_tuple(1,1,4));
+
+	
+
 	std::vector <int> col_ptrs, indices;
 	std::vector <double> num;
-	convert_triples_to_csc(rows, cols, triples_A, num, indices, col_ptrs);
-	/*std::cout << "num" << std::endl;
+	convert_triples_to_csc(rows, cols, beamer, num, indices, col_ptrs);
+	std::cout << "CSR REPRESENTATION" << std::endl;
+	std::cout << "num" << std::endl;
 	printVec(num);
 	std::cout << "row indices" << std::endl;
 	printVec(indices);
 	std::cout << "jc_csc_ptrs" << std::endl;
 	printVec(col_ptrs);
-	*/
+	
 	std::vector <int> ir, cp_dcsc, jc_dcsc, aux;
 	std::vector <double> num_dcsc;
 	int nnz, nzc, cf;
-	convert_triples_to_dcsc(rows, cols, triples_A, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
+	convert_triples_to_dcsc(rows, cols, dense1, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
 
+	std::cout << "DCSC REPRESENTATION" << std::endl;
 	std::cout << "nnz " << nnz << std::endl;
 	std::cout << "nzc " << nzc << std::endl;
 	std::cout << "upper cf " << cf << std::endl;
 	std::cout << "num" << std::endl;
 	printVec(num_dcsc);
-	/*std::cout << "ir" << std::endl;
+	std::cout << "ir" << std::endl;
 	printVec(ir);
 	std::cout << "jc" << std::endl;
 	printVec(jc_dcsc);
@@ -426,7 +461,7 @@ int main (int argc, char *argv[]) {
 	printVec(cp_dcsc);
 	std::cout << "aux" << std::endl;
 	printVec(aux);
-	*/
-	access_elem_in_matrix(3, 5, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
+	
+	access_elem_in_matrix(0, 1, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
 	return 0;
 }

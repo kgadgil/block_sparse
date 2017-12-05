@@ -1,0 +1,385 @@
+\documentclass[12pt]{beamer}
+\usetheme{Boadilla}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsfonts, tikz, amssymb}
+\usepackage{comment}
+\usepackage{blkarray}
+\author{Kalyani Gadgil}
+\title{Compressed Sparse Column (CSC) Storage }
+%\setbeamercovered{transparent} 
+%\setbeamertemplate{navigation symbols}{} 
+%\logo{} 
+%\institute{} 
+%\date{} 
+%\subject{} 
+\begin{document}
+\newcommand\hl[1]{\tikz[overlay, remember picture,baseline=-\the\dimexpr\fontdimen22\textfont2\relax]\node[rectangle,fill=green!60,rounded corners,fill opacity = 0.2,draw,thick,text opacity =1] {$#1$};} 
+
+\newcommand{\tikzmark}[2]{\tikz[overlay, remember picture] \node[inner sep=0pt, outer sep=0pt, anchor=base] (#1) {#2};}
+
+\setbeamerfont{footnote}{size=\tiny}
+ 
+\begin{frame}
+\titlepage
+\end{frame}
+
+%\begin{frame}
+%\tableofcontents
+%\end{frame}
+\begin{frame}{Need for Hypersparse Matrices}
+	\begin{center}
+		Matrix is hypersparse if number of non-zero elements is much less than the dimensions of the matrix $$ nnz < n $$
+		Hypersparse matrices arise after 2-dimensional block data decomposition of matrices for parallel processing like in SUMMA. \\
+	\end{center}
+\end{frame}
+
+\begin{frame}{Storage Complexity of Sparse Matrices for SUMMA}
+	\begin{enumerate}
+	\item Blocks of size $(n/\sqrt{p})\times (n/\sqrt{p})$ \\ where n - matrix dim and p - number of processors
+	\item Storing each of these submatrices in CSC format $O(n\sqrt{p} ++ nnz)$
+	\item Storing whole matrix $O(n + nnz)$ on single processor
+	\item Storing matrix in DCSC format requires $O(nnz)$
+\end{enumerate}		
+
+\end{frame}
+
+
+\begin{frame}[fragile]{CSC example - Column Major}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & 1 & 2 & 3 & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\begin{comment}
+	\begin{tabular}{c|c|c|c|c|c|c|c|c|c|}
+	\hline
+	0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+	\hline 
+	1 & 0 & 0 & 2 & 0 & 0 & 0 \\
+	\hline 
+	2 & 0 & 0 & 0 & 3 & 0 & 0 \\
+	\hline
+	3 & 0 & 0 & 0 & 0 & 0 & 0 \\
+	\hline
+	4 & 0 & 0 & 0 & 4 & 5 & 0 \\
+	\hline
+	5 & 0 & 0 & 0 & 0 & 0 & 0 \\
+	\hline
+	\end{tabular}\\
+\end{comment}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	Column-major \\
+	nnz = 4 \\
+	NUM = [1, 2, 3, 4] \\
+    row idx (IR) = [0, 3, 2, 5] \\ 
+    col idx = [1, 1, 2, 5] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC - Walkthrough}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & \hl{0} & 1 & 2 & 3 & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\
+	idx of NUM = [0] \\
+	\vspace{1cm}
+	NUM = [\hspace{1cm} \hl{$-$} \hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [\hspace{1cm}\hl{$-$}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column changed, so idx stored \\    
+    JC = [\hspace{1cm}\hl{0}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & \hl{1} & 2 & 3 & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & \hl{1} & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0] \\
+	\vspace{1cm}
+	NUM = [\hspace{1cm}\hl{1}\hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [\hspace{1cm}\hl{0}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column changed, so idx stored \\
+    JC = [0,\hspace{1cm}\hl{0}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & \hl{1} & 2 & 3 & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & \hl{2} & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0, 1] \\
+	\vspace{1cm}
+	NUM = [1, \hspace{1cm}\hl{2}\hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [0, \hspace{1cm}\hl{3}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column not changed, so idx not stored \\
+    JC = [0, 0, \hspace{1cm}\hl{}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & 1 & \hl{2} & 3 & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & \hl{3} & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0, 1, 2] \\
+	\vspace{1cm}
+	NUM = [1, 2, \hspace{1cm}\hl{3}\hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [0, 3, \hspace{1cm}\hl{2}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column changed, so idx stored \\
+    JC = [0, 0, \hspace{1cm}\hl{2}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & 1 & 2 & \hl{3} & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0, 1, 2, 3] \\
+	\vspace{1cm}
+	NUM = [1, 2, 3, \hspace{1cm}\hl{-}\hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [0, 3, 2, \hspace{1cm}\hl{-}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column changed, so idx stored \\
+    JC = [0, 0, 2, \hspace{1cm}\hl{3}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & 1 & 2 & 3 & \hl{4} & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & 4\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0, 1, 2, 3] \\
+	\vspace{1cm}
+	NUM = [1, 2, 3, \hspace{1cm}\hl{-}\hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [0, 3, 2, \hspace{1cm}\hl{-}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column changed, so idx stored \\
+    JC = [0, 0, 2, 3, \hspace{1cm}\hl{3}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & 1 & 2 & 3 & 4 & \hl{5} \\
+\begin{block}{c(cccccc)}
+  0 & 0 & 1 & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & 3 & 0 & 0 & 0\\
+  3 & 0 & 2 & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & \hl{4}\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0, 1, 2, 3] \\
+	\vspace{1cm}
+	NUM = [1, 2, 3, \hspace{1cm}\hl{4}\hspace{1cm}] \\
+	\vspace{1cm}
+    IR  = [0, 3, 2, \hspace{1cm}\hl{5}\hspace{1cm}] \\ 
+	\vspace{1cm}
+	Column changed, so idx stored \\
+    JC = [0, 0, 2, 3, 3, \hspace{1cm}\hl{3}\hspace{1cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{CSC example}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \centerline{Matrix A} \\
+   \begin{blockarray}{ccccccc}
+	\hspace{1cm} & 0 & 1 & 2 & 3 & 4 & 5 \\
+\begin{block}{c(cccccc)}
+  0 & 0 & \hl{1} & 0 & 0 & 0 & 0\\
+  1 & 0 & 0 & 0 & 0 & 0 & 0\\
+  2 & 0 & 0 & \hl{3} & 0 & 0 & 0\\
+  3 & 0 & \hl{2} & 0 & 0 & 0 & 0\\
+  4 & 0 & 0 & 0 & 0 & 0 & 0\\
+  5 & 0 & 0 & 0 & 0 & 0 & \hl{4}\\
+\end{block}
+\end{blockarray}
+
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+\begin{center}
+	JC stores indices of NUM where column changes	\\	
+	idx of val = [0, 1, 2, 3] \\
+	\vspace{1cm}
+	NUM = [1, 2, 3, 4] \\
+	\vspace{1cm}
+    IR  = [0, 3, 2, 5] \\ 
+	\vspace{1cm}
+	NNZ stored as the n+1 element\\
+	\vspace{1cm}
+    JC = [0, 0, 2, 3, 3, 3,\hspace{0.5cm} \hl{4}\hspace{0.5cm}] \\
+\end{center}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+
+
+
+
+
+\begin{frame}[fragile]{CSC example - Column Major}
+	\begin{enumerate}
+		\item $O(n + nnz)$ comes from JC array of size $n+1$
+	\end{enumerate}
+	\footnotetext{[1] Buluc, A., \& Gilbert, J. R. (2008). On the Representation and Multiplication of Hypersparse Matrices. https://doi.org/10.1109/IPDPS.2008.4536313}
+\end{frame}
+
+\begin{frame}{References}
+	[1] Buluc, A., \& Gilbert, J. R. (2008). On the Representation and Multiplication of Hypersparse Matrices. https://doi.org/10.1109/IPDPS 2008.4536313 \\
+	%[2]http://netlib.org/linalg/html_templates/node91.html
+\end{frame}
+
+\end{document}
