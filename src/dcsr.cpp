@@ -127,9 +127,9 @@ void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::v
 	}	
 }
 
-void convert_triples_to_csc(const int rows, const int cols, const auto triples_mat, auto &val, auto &indices, auto &jc_csc) {
+void convert_triples_to_csc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &jc_csc) {
 	std::vector <int> row_idx, col_idx;
-	for (my_tuple::const_iterator i = triples_mat.begin(); i != triples_mat.end(); ++i) {
+	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
 		row_idx.push_back(std::get<0>(*i));
 		col_idx.push_back(std::get<1>(*i));
 		if (which_major == "col-major"|| which_major == "colmajor"){
@@ -156,20 +156,9 @@ void convert_triples_to_csc(const int rows, const int cols, const auto triples_m
 	jc_csc.push_back(val.size());
 }
 
-void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_mat, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux, auto &nnz, auto &nzc, auto &upper_bound_cf) {
-	//sort tuple before using
-	std::cout << "unsorted tuple" << std::endl;
-	print_tuples(triples_mat);
-	std::sort(begin(triples_mat), end(triples_mat), 
-    	[](std::tuple<int, int, double> const &t1, std::tuple<int, int, double> const &t2) {
-      	  return std::get<1>(t1) < std::get<1>(t2);
-   		}
-	);
-	std::cout << "sorted tuple" << std::endl;
-	print_tuples(dense1);
-
+void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux, auto &nnz, auto &nzc, auto &upper_bound_cf) {
 	std::vector <int> row_idx, col_idx, jc_csc;
-	for (my_tuple::const_iterator i = triples_mat.begin(); i != triples_mat.end(); ++i) {
+	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
 		row_idx.push_back(std::get<0>(*i));
 		col_idx.push_back(std::get<1>(*i));
 		if (which_major == "col-major"|| which_major == "colmajor"){
@@ -394,11 +383,11 @@ int main (int argc, char *argv[]) {
 	//get_sorted_indices(lead_dim, lag_dim, A, val_A, idx);				//get col indices of A									//matrix stored in row major
 	
 	//given triples
-	my_tuple triples_mat;
-	triples_mat.push_back(std::make_tuple(5,0,0.1));
-	triples_mat.push_back(std::make_tuple(7,0,0.2));
-	triples_mat.push_back(std::make_tuple(3,6,0.3));
-	triples_mat.push_back(std::make_tuple(1,7,0.4));
+	my_tuple triples_A;
+	triples_A.push_back(std::make_tuple(5,0,0.1));
+	triples_A.push_back(std::make_tuple(7,0,0.2));
+	triples_A.push_back(std::make_tuple(3,6,0.3));
+	triples_A.push_back(std::make_tuple(1,7,0.4));
 
 	//functionality to sort triples before/after func
 	//right now has to be sorted by cols
@@ -429,7 +418,15 @@ int main (int argc, char *argv[]) {
 	dense1.push_back(std::make_tuple(1,0,3));
 	dense1.push_back(std::make_tuple(1,1,4));
 
-	
+	std::cout << "unsorted tuple" << std::endl;
+	print_tuples(dense1);
+	std::sort(begin(dense1), end(dense1), 
+    	[](std::tuple<int, int, double> const &t1, std::tuple<int, int, double> const &t2) {
+      	  return std::get<1>(t1) < std::get<1>(t2);
+   		}
+	);
+	std::cout << "sorted tuple" << std::endl;
+	print_tuples(dense1);
 
 	std::vector <int> col_ptrs, indices;
 	std::vector <double> num;
