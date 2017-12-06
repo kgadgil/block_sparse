@@ -118,44 +118,6 @@ void transpose(const auto lead_dim, const auto lag_dim, const std::vector<auto> 
 	}
 }
 
-void isect (const std::vector<auto> idx_A, const std::vector<auto> idx_B, std::vector<auto> &isect_vec) {			//intersection of A.JC and BT.JC; set of indices that contribute non-trivially to outer product
-	for (int i = 0; i!= idx_A.size(); ++i){
-		for (int j = 0; j!= idx_B.size(); ++j){
-			if(idx_A[i] == idx_B[j])							//get ONLY elements common only once
-				isect_vec.push_back(idx_A[i]);
-		}
-	}	
-}
-
-void convert_triples_to_csc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &jc_csc) {
-	std::vector <int> row_idx, col_idx;
-	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
-		row_idx.push_back(std::get<0>(*i));
-		col_idx.push_back(std::get<1>(*i));
-		if (which_major == "col-major"|| which_major == "colmajor"){
-			indices.push_back(std::get<0>(*i));
-		}	
-		else if (which_major == "row-major" || which_major == "rowmajor"){
-			indices.push_back(std::get<1>(*i));
-		}
-		val.push_back(std::get<2>(*i));
-	}
-
-	int nnz = val.size();
-	int cnt = 0;
-	for (int i = 0; i != cols; ++i){				//pythonic range-based for loops
-		for (int j = 0; j != nnz; ++j) {
-			if (j==0) {
-				jc_csc.push_back(cnt);
-			}
-			if (col_idx[j] == i) {
-				++cnt;
-			}
-		}
-	}
-	jc_csc.push_back(val.size());
-}
-
 void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_A, auto &val, auto &indices, auto &cp_dcsc, auto &jc_dcsc, auto &aux, auto &nnz, auto &nzc, auto &upper_bound_cf) {
 	std::vector <int> row_idx, col_idx, jc_csc;
 	for (my_tuple::const_iterator i = triples_A.begin(); i != triples_A.end(); ++i) {
@@ -165,7 +127,9 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 			int r = std::get<0>(*i);
 			int c = std::get<1>(*i);
 			indices.push_back(r);
-			jc_dcsc.push_back(c);
+			if (std::find(jc_dcsc.begin(), jc_dcsc.end(), c) == jc_dcsc.end()) {	//if elem not found
+				jc_dcsc.push_back(c);
+			}
 		}	
 		else if (which_major == "row-major" || which_major == "rowmajor"){
 			indices.push_back(std::get<1>(*i));
@@ -204,6 +168,8 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 	cp_dcsc.push_back(nnz);
 	//std::cout << "csc format jc" << std::endl;
 	//printVec(jc_csc);
+	
+	//AUXILLIARY ARRAY LOGIC
 	std::vector <int> d, cp;
 	int cnt_aux = 0, cnt_cf = 0;
 	bool flag_cf = true;
@@ -363,7 +329,7 @@ int main (int argc, char *argv[]) {
 	//int n = atoi(argv[3]);
 	
 	int m, n;
-	m = n = 2;
+	m = n = 6;
 	which_major = argv[1];
 	int lead_dim, lag_dim;					//for both matrices but two diff for multiplication
 	check_major(m, n, lead_dim, lag_dim);
@@ -389,8 +355,6 @@ int main (int argc, char *argv[]) {
 	triples_A.push_back(std::make_tuple(3,6,0.3));
 	triples_A.push_back(std::make_tuple(1,7,0.4));
 
-	//functionality to sort triples before/after func
-	//right now has to be sorted by cols
 	//9*9 matrix
 	my_tuple eg_A;
 	eg_A.push_back(std::make_tuple(0,0,0.2));
@@ -411,28 +375,21 @@ int main (int argc, char *argv[]) {
 	beamer.push_back(std::make_tuple(2,2,3));
 	beamer.push_back(std::make_tuple(5,5,4));
 
-	//2*2matrix
-	my_tuple dense1;
-	dense1.push_back(std::make_tuple(0,0,1));
-	dense1.push_back(std::make_tuple(0,1,2));
-	dense1.push_back(std::make_tuple(1,0,3));
-	dense1.push_back(std::make_tuple(1,1,4));
-
 	//sort tuples before passing it to convert_dcsc functions
-	std::cout << "unsorted tuple" << std::endl;
-	print_tuples(dense1);
-	std::sort(begin(dense1), end(dense1), 
+	//std::cout << "unsorted tuple" << std::endl;
+	//print_tuples(dense1);
+	std::sort(begin(beamer), end(beamer), 
     	[](std::tuple<int, int, double> const &t1, std::tuple<int, int, double> const &t2) {
       	  return std::get<1>(t1) < std::get<1>(t2);
    		}
 	);
-	std::cout << "sorted tuple" << std::endl;
-	print_tuples(dense1);
+	//std::cout << "sorted tuple" << std::endl;
+	//print_tuples(dense1);
 
 	std::vector <int> ir, cp_dcsc, jc_dcsc, aux;
 	std::vector <double> num_dcsc;
 	int nnz, nzc, cf;
-	convert_triples_to_dcsc(rows, cols, dense1, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
+	convert_triples_to_dcsc(rows, cols, beamer, num_dcsc, ir, cp_dcsc, jc_dcsc, aux, nnz, nzc, cf);
 
 	std::cout << "DCSC REPRESENTATION" << std::endl;
 	std::cout << "nnz " << nnz << std::endl;
@@ -449,6 +406,6 @@ int main (int argc, char *argv[]) {
 	std::cout << "aux" << std::endl;
 	printVec(aux);
 	
-	access_elem_in_matrix(0, 1, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
+	access_elem_in_matrix(2, 2, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
 	return 0;
 }
