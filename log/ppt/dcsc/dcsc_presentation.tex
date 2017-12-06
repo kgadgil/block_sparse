@@ -200,7 +200,7 @@ Pointers mean indices or location of value inside an array/vector. Not pointers 
 	JC stores column indices \\
     JC = [1, \hspace{0.5cm}\hlpink{2}\hspace{0.5cm}] \\
 	\vspace{0.3cm}
-	idx\_JC = [0, \hspace{0.5cm}\hlpink{1}\hspace{0.5cm},$\mid$ 2] \\
+	idx\_JC = [0, \hspace{0.5cm}\hlpink{1}\hspace{0.5cm}, 2] \\
 	\vspace{0.3cm}
 	AUX stores one ptr to idx of JC for each chunk\\
 	AUX = [0] \\
@@ -241,7 +241,7 @@ Pointers mean indices or location of value inside an array/vector. Not pointers 
 	JC stores column indices \\
     JC = [1, 2, \hspace{0.5cm}\hlpink{5}\hspace{0.5cm}] \\
 	\vspace{0.3cm}
-	idx\_JC = [0, 1, $\mid$ \hspace{0.5cm}\hlpink{2}\hspace{0.5cm}, 3] \\
+	idx\_JC = [0, 1, \hspace{0.5cm}\hlpink{2}\hspace{0.5cm}, 3] \\
 	\vspace{0.3cm}
 	AUX stores one ptr to idx of JC for each chunk\\
 	AUX = [0, \hspace{0.5cm}\hlpink{2}\hspace{0.5cm}] \\
@@ -283,7 +283,7 @@ End of matrix reached therefore, nnz added to CP and AUX
 	JC stores column indices \\
     JC = [1, 2, 5] \\
 	\vspace{0.3cm}
-	idx\_JC = [0, 1, $\mid$ 2, \hspace{0.5cm}\hlpink{3}\hspace{0.5cm}] \\
+	idx\_JC = [0, 1, 2, \hspace{0.5cm}\hlpink{3}\hspace{0.5cm}] \\
 	\vspace{0.3cm}
 	AUX stores one ptr to idx of JC for each chunk\\
 	AUX = [0, 2, \hspace{0.5cm}\hlpink{3}\hspace{0.5cm}] \\

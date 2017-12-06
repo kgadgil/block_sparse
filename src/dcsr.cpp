@@ -145,7 +145,7 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 	nzc = jc_dcsc.size();
 	
 	double cf = (double) (cols+1)/nzc;
-	//std::cout << "cf " << cf << std::endl;
+	std::cout << "cf " << cf << std::endl;
 	upper_bound_cf = ceil(cf);
 	
 	
@@ -195,18 +195,15 @@ void convert_triples_to_dcsc(const int rows, const int cols, const auto triples_
 		
 	}
 
-	/*
 	std::cout << "diff arr" << std::endl;
 	printVec(d);
 	std::cout << "last element of d " << d[cols] << std::endl;
-	*/
 	cp.push_back(nnz);
 	//std::cout << "cp arr" << std::endl;
 	//printVec(cp);
 	
-
 	//pushback total number of cols to aux
-	aux.push_back(nzc);
+	aux.push_back(nnz);
 	//std::cout << "aux" << std::endl;
 	//printVec(aux);
 }
@@ -285,9 +282,10 @@ void access_elem_in_matrix(const auto &i, const auto &j, const auto nnz, const a
 		int idx = floor(j/cf);
 		int s = aux[idx];
 		int e = aux[idx+1];
+		std::cout << "cf " << cf << std::endl;
 		//std::cout << "start " << s << " end " << e << std::endl;
 		//std::cout << "jc" << std::endl;
-		//printVec(jc);
+		printVec(jc);
 
 		auto start = jc.begin() + s;
 		auto end = jc.begin() + e;
@@ -305,8 +303,8 @@ void access_elem_in_matrix(const auto &i, const auto &j, const auto nnz, const a
 			auto startc = ir.begin() + sc;
 			auto endc = ir.begin() + ec;
 			
-			//std::cout << "ir" << std::endl;
-			//printVec(ir);
+			std::cout << "ir" << std::endl;
+			printVec(ir);
 
 			auto iter_row = std::find (startc, endc, i);
 			if (iter_row != endc) {
@@ -406,6 +404,6 @@ int main (int argc, char *argv[]) {
 	std::cout << "aux" << std::endl;
 	printVec(aux);
 	
-	access_elem_in_matrix(2, 2, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
+	access_elem_in_matrix(0, 4, nnz, nzc, cf, num_dcsc, ir, jc_dcsc, cp_dcsc, aux, rows, cols);
 	return 0;
 }
