@@ -26,11 +26,10 @@
 %\begin{frame}
 %\tableofcontents
 %\end{frame}
-\begin{frame}{Need for Hypersparse Matrices}
+\begin{frame}{Need for Efficient Sparse Matrix Storage}
 	\begin{center}
-		Matrix is hypersparse if number of non-zero elements is much less than the dimensions of the matrix $$ nnz < n $$
-		Hypersparse matrices arise after 2-dimensional block data decomposition of matrices for parallel processing like in SUMMA. \\
-	\end{center}
+		Sparse matrices contain a lot of zeros and not all of them are useful information. The most common way is to use the CSR/CSC format.
+		\end{center}
 \end{frame}
 
 \begin{frame}{Storage Complexity of Sparse Matrices for SUMMA}
